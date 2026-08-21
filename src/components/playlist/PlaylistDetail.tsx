@@ -306,14 +306,28 @@ export const PlaylistDetail: React.FC<PlaylistDetailProps> = ({ playlist, onBack
                   {formatDuration(track.duration || 210)}
                 </div>
 
-                {currentUser && (playlist.creatorId === currentUser.id || (playlist as any).user_id === currentUser.id) && (
+                {!playlist.id.startsWith('pl-trending') && (
                   <button
                     onClick={async e => {
                       e.stopPropagation();
                       await removeTrackFromPlaylist(playlist.id, track.id);
                     }}
-                    style={{ background: 'none', border: 'none', color: 'var(--text-subtle)', cursor: 'pointer', marginLeft: '6px' }}
-                    title="Remove from playlist"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-subtle)',
+                      cursor: 'pointer',
+                      marginLeft: '6px',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 'var(--radius-xs)',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--color-primary)')}
+                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-subtle)')}
+                    title="Remove song from playlist"
                   >
                     <Trash2 size={16} />
                   </button>

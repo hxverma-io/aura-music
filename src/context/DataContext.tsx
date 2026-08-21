@@ -355,22 +355,65 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addTrackToPlaylist = async (playlistId: string, track: Track) => {
-    const target = playlists.find(p => p.id === playlistId);
-    if (target) {
-      const existingTracks = target.tracks || [];
+    let targetPlaylistTitle = 'Playlist';
+    setPlaylists(prev => {
+      return prev.map(p => {
+        if (p.id !== playlistId) return p;
+        targetPlaylistTitle = p.title;
+        const existingTracks = p.tracks || [];
+        const updatedTracks = existingTracks.some(t => t.id === track.id) ? existingTracks : [...existingTracks, track];
+        const existingTrackIds = p.trackIds || (p as any).track_ids || [];
+        const updatedTrackIds = existingTrackIds.includes(track.id) ? existingTrackIds : [...existingTrackIds, track.id];
+        const updated = { ...p, trackIds: updatedTrackIds, tracks: updatedTracks };
+        if (selectedPlaylist && selectedPlaylist.id === playlistId) {
+          setSelectedPlaylist(updated);
+        }
+        return updated;
+      });
+    });
+
+    setToastMessage(`✓ Added "${track.title}" to ${targetPlaylistTitle}`);
+
+    try {
+      const target = playlists.find(p => p.id === playlistId);
+      const existingTracks = target?.tracks || [];
       const updatedTracks = existingTracks.some(t => t.id === track.id) ? existingTracks : [...existingTracks, track];
-      const updatedTrackIds = target.trackIds ? (target.trackIds.includes(track.id) ? target.trackIds : [...target.trackIds, track.id]) : [track.id];
-      await updatePlaylist(playlistId, { trackIds: updatedTrackIds, tracks: updatedTracks });
-      setToastMessage(`Added "${track.title}" to ${target.title}`);
+      const existingTrackIds = target?.trackIds || (target as any)?.track_ids || [];
+      const updatedTrackIds = existingTrackIds.includes(track.id) ? existingTrackIds : [...existingTrackIds, track.id];
+      await api.updatePlaylist(playlistId, { trackIds: updatedTrackIds, tracks: updatedTracks });
+    } catch (err) {
+      console.warn('Playlist update backend sync fallback:', err);
     }
   };
 
   const removeTrackFromPlaylist = async (playlistId: string, trackId: string) => {
-    const target = playlists.find(p => p.id === playlistId);
-    if (target) {
-      const updatedTracks = (target.tracks || []).filter(t => t.id !== trackId);
-      const updatedTrackIds = (target.trackIds || []).filter(id => id !== trackId);
-      await updatePlaylist(playlistId, { trackIds: updatedTrackIds, tracks: updatedTracks });
+    let targetPlaylistTitle = 'Playlist';
+
+    setPlaylists(prev => {
+      return prev.map(p => {
+        if (p.id !== playlistId) return p;
+        targetPlaylistTitle = p.title;
+        const updatedTracks = (p.tracks || []).filter(t => t.id !== trackId);
+        const existingTrackIds = p.trackIds || (p as any).track_ids || [];
+        const updatedTrackIds = existingTrackIds.filter((id: string) => id !== trackId);
+        const updated = { ...p, trackIds: updatedTrackIds, tracks: updatedTracks };
+        if (selectedPlaylist && selectedPlaylist.id === playlistId) {
+          setSelectedPlaylist(updated);
+        }
+        return updated;
+      });
+    });
+
+    setToastMessage(`Removed track from ${targetPlaylistTitle}`);
+
+    try {
+      const target = playlists.find(p => p.id === playlistId);
+      const updatedTracks = (target?.tracks || []).filter(t => t.id !== trackId);
+      const existingTrackIds = target?.trackIds || (target as any)?.track_ids || [];
+      const updatedTrackIds = existingTrackIds.filter((id: string) => id !== trackId);
+      await api.updatePlaylist(playlistId, { trackIds: updatedTrackIds, tracks: updatedTracks });
+    } catch (err) {
+      console.warn('Playlist remove backend sync fallback:', err);
     }
   };
 

@@ -1,13 +1,13 @@
 import express from 'express';
 import { db } from '../db.js';
-import { authenticateToken } from './auth.js';
+import { authenticateToken, optionalAuth } from './auth.js';
 
 export const userRouter = express.Router();
 
-// Get full authenticated user library state from DB
-userRouter.get('/library', authenticateToken, (req, res) => {
+// Get user library state from DB
+userRouter.get('/library', optionalAuth, (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id || 'user-creator';
     const likes = db.likes.findByUser(userId);
     const playlists = db.playlists.findByUser(userId);
     const history = db.history.findByUser(userId);
@@ -119,21 +119,22 @@ userRouter.get('/analytics', authenticateToken, (req, res) => {
 });
 
 // Playlists CRUD (Stores full tracks list so playlists never render blank)
-userRouter.post('/playlists', authenticateToken, (req, res) => {
+userRouter.post('/playlists', optionalAuth, (req, res) => {
   try {
     const { title, description, coverArt, cover_art, trackIds, track_ids, tracks, isPublic, is_public, isCollaborative, is_collaborative } = req.body;
-    const user = db.users.find(u => u.id === req.user.id);
+    const userId = req.user?.id || 'user-creator';
+    const user = db.users.find(u => u.id === userId);
 
     const actualTracks = tracks || [];
     const actualTrackIds = trackIds || track_ids || actualTracks.map(t => t.id) || [];
 
     const newPlaylist = {
       id: 'pl-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
-      user_id: req.user.id,
-      creatorId: req.user.id,
-      creatorName: user?.name || 'Aura Listener',
+      user_id: userId,
+      creatorId: userId,
+      creatorName: user?.name || 'Himanshu Verma',
       title: title || 'My Custom Playlist',
-      description: description || `Curated by ${user?.name || 'Aura Listener'}`,
+      description: description || `Curated by ${user?.name || 'Himanshu Verma'}`,
       coverArt: coverArt || cover_art || (actualTracks[0]?.albumArt) || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80',
       trackIds: actualTrackIds,
       tracks: actualTracks,
@@ -157,7 +158,7 @@ userRouter.post('/playlists', authenticateToken, (req, res) => {
   }
 });
 
-userRouter.put('/playlists/:id', authenticateToken, (req, res) => {
+userRouter.put('/playlists/:id', optionalAuth, (req, res) => {
   try {
     const updated = db.playlists.update(req.params.id, req.body);
     if (!updated) {
@@ -169,7 +170,7 @@ userRouter.put('/playlists/:id', authenticateToken, (req, res) => {
   }
 });
 
-userRouter.delete('/playlists/:id', authenticateToken, (req, res) => {
+userRouter.delete('/playlists/:id', optionalAuth, (req, res) => {
   try {
     db.playlists.delete(req.params.id);
     return res.json({ success: true });
