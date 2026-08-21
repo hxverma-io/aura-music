@@ -21,7 +21,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const DEFAULT_GUEST_USER: User = {
   id: 'user-creator',
-  name: 'HV',
+  name: 'Himanshu Verma',
   username: 'hxverma.io',
   email: 'hxverma.io@gmail.com',
   avatar: 'https://github.com/hxverma-io.png',

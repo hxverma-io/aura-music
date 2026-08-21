@@ -124,8 +124,8 @@ export const AIChatView: React.FC = () => {
   ];
 
   return (
-    <div className="content-body" style={{ height: 'calc(100vh - 180px)', minHeight: '580px' }}>
-      <div className="ai-chat-card" style={{ height: '100%' }}>
+    <div className="ai-view-container">
+      <div className="ai-chat-card">
         {/* Header */}
         <div className="ai-chat-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -286,7 +286,7 @@ export const AIChatView: React.FC = () => {
         </div>
 
         {/* Quick Suggestion Prompts */}
-        <div style={{ display: 'flex', gap: '8px', padding: '10px 24px', backgroundColor: 'rgba(0, 0, 0, 0.15)', overflowX: 'auto' }}>
+        <div className="ai-quick-prompts">
           {quickQuestions.map((q, idx) => (
             <button
               key={idx}

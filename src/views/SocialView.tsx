@@ -73,7 +73,7 @@ export const SocialView: React.FC = () => {
           </div>
 
           <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginTop: '8px', color: '#ffffff' }}>
-            HV
+            {creatorProfile?.name || 'Himanshu Verma'}
           </h2>
 
           <p style={{ fontSize: '0.92rem', color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.6 }}>

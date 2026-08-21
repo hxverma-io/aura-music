@@ -16,7 +16,7 @@ const DEFAULT_DB = {
   users: [
     {
       id: 'user-creator',
-      name: 'HV',
+      name: 'Himanshu Verma',
       username: 'hxverma.io',
       email: 'hxverma.io@gmail.com',
       password_hash: '$2a$10$w1qC7p5W4BqjXFmOQYyV6.zVbF3bHl2b6q0Yl5Zl3z7sV1o7J5w5q', // password: password123

@@ -33,14 +33,11 @@
 ---
 
 ## ⚡ Featured Master Showcase (Creator Curations)
-Aura Music comes pre-configured with the official **HV Master Favorites** in full 320kbps audio:
+Aura Music comes pre-configured with the official **Himanshu Verma Master Favorites** in full 320kbps audio:
 * 🎸 **Mary On A Cross** — *Ghost*
 * 🖤 **I Wanna Be Yours** — *Arctic Monkeys*
 * 🌟 **Die With A Smile** — *Lady Gaga & Bruno Mars*
 * 🌧️ **Pal Pal X Talwinder** — *Aditya Likhari & Talwiinder*
-* 💖 **Kesariya** — *Pritam & Arijit Singh*
-* ⚡ **Excuses** — *AP Dhillon & Gurinder Gill*
-* 🚀 **Starboy** — *The Weeknd & Daft Punk*
 
 ---
 
@@ -141,7 +138,7 @@ aura-music/
 
 ## 👤 Project Creator & Maintainer
 
-**HV (Hardik Verma)**
+**Himanshu Verma (@hxverma-io)**
 * 🐙 GitHub: [@hxverma-io](https://github.com/hxverma-io)
 * 📸 Instagram: [@hxverma.io](https://www.instagram.com/hxverma.io/)
 * 💼 Role: Creator & Lead Architect
