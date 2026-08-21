@@ -92,10 +92,15 @@ body {
   padding: 16px;
   gap: 16px;
   position: relative;
+  max-width: 1720px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .main-shell {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-surface);
@@ -105,11 +110,14 @@ body {
   position: relative;
   min-height: calc(100vh - 32px);
   padding-bottom: 110px;
+  overflow-x: hidden;
 }
 
 /* Sidebar Navigation */
 .sidebar {
   width: 250px;
+  min-width: 250px;
+  max-width: 250px;
   flex-shrink: 0;
   background-color: var(--bg-sidebar);
   border-radius: var(--radius-xl);
@@ -118,7 +126,11 @@ body {
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-md);
-  transition: transform var(--transition-normal);
+  height: calc(100vh - 32px);
+  position: sticky;
+  top: 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .sidebar-logo {
@@ -437,10 +449,14 @@ body {
 
 /* Main Content Body */
 .content-body {
-  padding: 24px 28px;
+  padding: 24px 32px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* Hero Carousel Banner (Direct image match) */

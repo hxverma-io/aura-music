@@ -1,6 +1,7 @@
 import React from 'react';
 import { HeroCarousel } from '../components/dashboard/HeroCarousel';
 import { HorizontalTrackSlider } from '../components/dashboard/HorizontalTrackSlider';
+import { TrackCard } from '../components/dashboard/TrackCard';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { aiMusicService } from '../services/aiService';
@@ -144,9 +145,9 @@ export const HomeView: React.FC = () => {
         <div className="cards-slider">
           {aiRecommendations.map(({ track, reason }) => (
             <div key={track.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <HorizontalTrackSlider
-                title=""
-                tracks={[track]}
+              <TrackCard
+                track={track}
+                trackList={aiRecommendations.map(r => r.track)}
               />
               <span style={{ fontSize: '0.74rem', color: 'var(--text-subtle)', fontStyle: 'italic', padding: '0 4px' }}>
                 💡 {reason}
