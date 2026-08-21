@@ -1,0 +1,462 @@
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { Track, EqualizerBand } from '../types';
+import { audioEngine, DEFAULT_EQ_BANDS, EQ_PRESETS } from '../services/audioService';
+import { api } from '../services/apiService';
+
+interface AudioContextType {
+  currentTrack: Track | null;
+  isPlaying: boolean;
+  setIsPlaying: (playing: boolean) => void;
+  currentTime: number;
+  duration: number;
+  volume: number;
+  isMuted: boolean;
+  isShuffle: boolean;
+  repeatMode: 'off' | 'all' | 'one';
+  queue: Track[];
+  queueIndex: number;
+  playbackSpeed: number;
+  audioQuality: '128k' | '256k' | 'lossless';
+  eqBands: EqualizerBand[];
+  activeEQPreset: string;
+  isFullscreenPlayer: boolean;
+  isQueueOpen: boolean;
+  isEqualizerOpen: boolean;
+  sleepTimerMinutes: number | null;
+  sleepTimerRemaining: number | null;
+  activeLyricsIndex: number;
+  playTrack: (track: Track, newQueue?: Track[]) => void;
+  togglePlay: () => void;
+  pause: () => void;
+  resume: () => void;
+  nextTrack: () => void;
+  prevTrack: () => void;
+  seek: (seconds: number) => void;
+  setVolume: (vol: number) => void;
+  toggleMute: () => void;
+  toggleShuffle: () => void;
+  toggleRepeat: () => void;
+  addToQueue: (track: Track) => void;
+  removeFromQueue: (index: number) => void;
+  clearQueue: () => void;
+  setPlaybackSpeed: (speed: number) => void;
+  setAudioQuality: (quality: '128k' | '256k' | 'lossless') => void;
+  setEQBandGain: (index: number, gain: number) => void;
+  applyEQPreset: (presetName: string) => void;
+  setSleepTimer: (minutes: number | null) => void;
+  setIsFullscreenPlayer: (open: boolean) => void;
+  setIsQueueOpen: (open: boolean) => void;
+  setIsEqualizerOpen: (open: boolean) => void;
+}
+
+const AudioContext = createContext<AudioContextType | undefined>(undefined);
+
+export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [duration, setDuration] = useState<number>(210);
+  const [volume, setVolumeState] = useState<number>(0.9);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [isShuffle, setIsShuffle] = useState<boolean>(false);
+  const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
+  const [queue, setQueue] = useState<Track[]>([]);
+  const [queueIndex, setQueueIndex] = useState<number>(0);
+  const [playbackSpeed, setPlaybackSpeedState] = useState<number>(1.0);
+  const [audioQuality, setAudioQualityState] = useState<'128k' | '256k' | 'lossless'>('lossless');
+  const [eqBands, setEqBands] = useState<EqualizerBand[]>(DEFAULT_EQ_BANDS);
+  const [activeEQPreset, setActiveEQPreset] = useState<string>('Flat');
+  const [isFullscreenPlayer, setIsFullscreenPlayer] = useState<boolean>(false);
+  const [isQueueOpen, setIsQueueOpen] = useState<boolean>(false);
+  const [isEqualizerOpen, setIsEqualizerOpen] = useState<boolean>(false);
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
+  const [sleepTimerRemaining, setSleepTimerRemaining] = useState<number | null>(null);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const sleepTimerRef = useRef<any>(null);
+  const repeatModeRef = useRef<'off' | 'all' | 'one'>('off');
+  repeatModeRef.current = repeatMode;
+
+  const queueRef = useRef<Track[]>([]);
+  queueRef.current = queue;
+
+  const queueIndexRef = useRef<number>(0);
+  queueIndexRef.current = queueIndex;
+
+  // Initialize Native Audio Element & Web Audio DSP Graph
+  useEffect(() => {
+    const audio = new Audio();
+    audio.crossOrigin = 'anonymous';
+    audio.preload = 'auto';
+    audio.volume = volume;
+    audioRef.current = audio;
+
+    // Attach to Web Audio engine
+    audioEngine.init(audio);
+
+    // Event Listeners for Native HTML5 Audio
+    const handleTimeUpdate = () => {
+      if (audio.currentTime !== undefined && !isNaN(audio.currentTime)) {
+        setCurrentTime(Math.floor(audio.currentTime));
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+        setDuration(Math.floor(audio.duration));
+      }
+    };
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+      audioEngine.stopSynthPlayback();
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
+    const handleEnded = () => {
+      const currentRepeat = repeatModeRef.current;
+      const currentQ = queueRef.current;
+      const currentIdx = queueIndexRef.current;
+
+      if (currentRepeat === 'one') {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } else if (currentRepeat === 'all' || currentIdx < currentQ.length - 1) {
+        nextTrack();
+      } else {
+        setIsPlaying(false);
+      }
+    };
+
+    const handleError = (e: any) => {
+      console.warn('Audio stream playback error, engaging graceful fallback:', e);
+      if (currentTrack) {
+        audioEngine.startSynthPlayback(currentTrack);
+      }
+    };
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('durationchange', handleLoadedMetadata);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('durationchange', handleLoadedMetadata);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+      audio.pause();
+      audioEngine.stopSynthPlayback();
+    };
+  }, []);
+
+  // Sleep Timer countdown
+  useEffect(() => {
+    if (sleepTimerMinutes === null) {
+      if (sleepTimerRef.current) clearInterval(sleepTimerRef.current);
+      setSleepTimerRemaining(null);
+      return;
+    }
+
+    setSleepTimerRemaining(sleepTimerMinutes * 60);
+
+    sleepTimerRef.current = setInterval(() => {
+      setSleepTimerRemaining(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(sleepTimerRef.current);
+          pause();
+          setSleepTimerMinutes(null);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (sleepTimerRef.current) clearInterval(sleepTimerRef.current);
+    };
+  }, [sleepTimerMinutes]);
+
+  // Primary playback trigger
+  const playTrack = (track: Track, newQueue?: Track[]) => {
+    audioEngine.ensureContext();
+    audioEngine.stopSynthPlayback();
+
+    setCurrentTrack(track);
+    setCurrentTime(0);
+    setDuration(track.duration || 210);
+
+    // Queue update
+    if (newQueue && newQueue.length > 0) {
+      setQueue(newQueue);
+      const idx = newQueue.findIndex(t => t.id === track.id);
+      setQueueIndex(idx !== -1 ? idx : 0);
+    } else if (!queue.some(t => t.id === track.id)) {
+      setQueue(prev => [...prev, track]);
+      setQueueIndex(queue.length);
+    } else {
+      const idx = queue.findIndex(t => t.id === track.id);
+      if (idx !== -1) setQueueIndex(idx);
+    }
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = track.audioUrl;
+      audioRef.current.playbackRate = playbackSpeed;
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(err => {
+        console.warn('Native playback error, triggering audio engine synthesizer:', err);
+        audioEngine.startSynthPlayback(track);
+        setIsPlaying(true);
+      });
+    }
+
+    // Persist real history in database
+    api.recordHistory(track.id, track, track.duration || 180).catch(() => {});
+  };
+
+  const togglePlay = () => {
+    if (!currentTrack && queue.length > 0) {
+      playTrack(queue[0]);
+      return;
+    }
+    if (isPlaying) {
+      pause();
+    } else {
+      resume();
+    }
+  };
+
+  const pause = () => {
+    setIsPlaying(false);
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    audioEngine.stopSynthPlayback();
+  };
+
+  const resume = () => {
+    audioEngine.ensureContext();
+    if (audioRef.current && audioRef.current.src) {
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+        audioEngine.stopSynthPlayback();
+      }).catch(() => {
+        if (currentTrack) audioEngine.startSynthPlayback(currentTrack);
+        setIsPlaying(true);
+      });
+    } else if (currentTrack) {
+      playTrack(currentTrack);
+    }
+  };
+
+  const nextTrack = () => {
+    const currentQ = queueRef.current;
+    if (currentQ.length === 0) return;
+    let nextIdx = queueIndexRef.current + 1;
+    if (isShuffle) {
+      nextIdx = Math.floor(Math.random() * currentQ.length);
+    } else if (nextIdx >= currentQ.length) {
+      nextIdx = 0;
+    }
+    setQueueIndex(nextIdx);
+    playTrack(currentQ[nextIdx], currentQ);
+  };
+
+  const prevTrack = () => {
+    if (currentTime > 4) {
+      seek(0);
+      return;
+    }
+    const currentQ = queueRef.current;
+    if (currentQ.length === 0) return;
+    let prevIdx = queueIndexRef.current - 1;
+    if (prevIdx < 0) prevIdx = currentQ.length - 1;
+    setQueueIndex(prevIdx);
+    playTrack(currentQ[prevIdx], currentQ);
+  };
+
+  const seek = (seconds: number) => {
+    setCurrentTime(seconds);
+    if (audioRef.current) {
+      try {
+        audioRef.current.currentTime = seconds;
+      } catch (e) {}
+    }
+  };
+
+  const setVolume = (vol: number) => {
+    const clamped = Math.max(0, Math.min(1, vol));
+    setVolumeState(clamped);
+    setIsMuted(clamped === 0);
+    if (audioRef.current) {
+      audioRef.current.volume = clamped;
+      audioRef.current.muted = clamped === 0;
+    }
+    audioEngine.setVolume(clamped);
+  };
+
+  const toggleMute = () => {
+    if (isMuted) {
+      setIsMuted(false);
+      const targetVol = volume || 0.9;
+      if (audioRef.current) {
+        audioRef.current.muted = false;
+        audioRef.current.volume = targetVol;
+      }
+      audioEngine.setVolume(targetVol);
+    } else {
+      setIsMuted(true);
+      if (audioRef.current) {
+        audioRef.current.muted = true;
+      }
+      audioEngine.setVolume(0);
+    }
+  };
+
+  const toggleShuffle = () => {
+    setIsShuffle(!isShuffle);
+  };
+
+  const toggleRepeat = () => {
+    setRepeatMode(prev => (prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off'));
+  };
+
+  const addToQueue = (track: Track) => {
+    setQueue(prev => [...prev, track]);
+  };
+
+  const removeFromQueue = (index: number) => {
+    setQueue(prev => prev.filter((_, i) => i !== index));
+    if (index === queueIndex && queue.length > 1) {
+      nextTrack();
+    }
+  };
+
+  const clearQueue = () => {
+    if (currentTrack) {
+      setQueue([currentTrack]);
+      setQueueIndex(0);
+    } else {
+      setQueue([]);
+      setQueueIndex(0);
+    }
+  };
+
+  const setPlaybackSpeed = (speed: number) => {
+    setPlaybackSpeedState(speed);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = speed;
+    }
+  };
+
+  const setAudioQuality = (quality: '128k' | '256k' | 'lossless') => {
+    setAudioQualityState(quality);
+  };
+
+  const setEQBandGain = (index: number, gain: number) => {
+    setEqBands(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], gain };
+      return updated;
+    });
+    audioEngine.setEQBandGain(index, gain);
+  };
+
+  const applyEQPreset = (presetName: string) => {
+    setActiveEQPreset(presetName);
+    const gains = EQ_PRESETS[presetName] || EQ_PRESETS['Flat'];
+    setEqBands(prev =>
+      prev.map((band, idx) => ({ ...band, gain: gains[idx] ?? 0 }))
+    );
+    audioEngine.applyEQPreset(gains);
+  };
+
+  const setSleepTimer = (minutes: number | null) => {
+    setSleepTimerMinutes(minutes);
+  };
+
+  const activeLyricsIndex = React.useMemo(() => {
+    if (!currentTrack?.lyrics || currentTrack.lyrics.length === 0) return -1;
+    let activeIdx = 0;
+    currentTrack.lyrics.forEach((line, idx) => {
+      const match = line.match(/\[(\d+):(\d+)\]/);
+      if (match) {
+        const lineSeconds = parseInt(match[1]) * 60 + parseInt(match[2]);
+        if (currentTime >= lineSeconds) {
+          activeIdx = idx;
+        }
+      }
+    });
+    return activeIdx;
+  }, [currentTrack, currentTime]);
+
+  return (
+    <AudioContext.Provider
+      value={{
+        currentTrack,
+        isPlaying,
+        setIsPlaying,
+        currentTime,
+        duration,
+        volume,
+        isMuted,
+        isShuffle,
+        repeatMode,
+        queue,
+        queueIndex,
+        playbackSpeed,
+        audioQuality,
+        eqBands,
+        activeEQPreset,
+        isFullscreenPlayer,
+        isQueueOpen,
+        isEqualizerOpen,
+        sleepTimerMinutes,
+        sleepTimerRemaining,
+        activeLyricsIndex,
+        playTrack,
+        togglePlay,
+        pause,
+        resume,
+        nextTrack,
+        prevTrack,
+        seek,
+        setVolume,
+        toggleMute,
+        toggleShuffle,
+        toggleRepeat,
+        addToQueue,
+        removeFromQueue,
+        clearQueue,
+        setPlaybackSpeed,
+        setAudioQuality,
+        setEQBandGain,
+        applyEQPreset,
+        setSleepTimer,
+        setIsFullscreenPlayer,
+        setIsQueueOpen,
+        setIsEqualizerOpen
+      }}
+    >
+      {children}
+    </AudioContext.Provider>
+  );
+};
+
+export const useAudio = () => {
+  const context = useContext(AudioContext);
+  if (!context) throw new Error('useAudio must be used within an AudioProvider');
+  return context;
+};
