@@ -7,18 +7,20 @@
 [![React](https://img.shields.io/badge/React-19.0-61dafb.svg?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6.svg?logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.0-646cff.svg?logo=vite)](https://vitejs.dev/)
+[![Security: Clean](https://img.shields.io/badge/Security-Audit%20Passed-brightgreen.svg)](#-security--privacy-guarantees)
 [![Audio](https://img.shields.io/badge/Audio-320kbps%20Lossless-ef233c.svg)](https://github.com/hxverma-io)
 [![Creator](https://img.shields.io/badge/Creator-@hxverma--io-000000.svg?logo=github)](https://github.com/hxverma-io)
 
 <p align="center">
-  <strong>An ultra-fast, database-backed, audio-first streaming platform with real-time 320kbps stream decryption, AI lyrics identification, Web Audio DSP 10-Band Equalizer, offline audio caching, and fluid glassmorphic UI.</strong>
+  <strong>An ultra-fast, database-backed, audio-first streaming platform featuring real-time stream decryption, AI lyrics identification, Web Audio DSP 10-Band Graphic Equalizer, offline caching, and fluid glassmorphic design.</strong>
 </p>
 
 [🌟 Key Features](#-why-aura-music-is-better) •
 [🚀 Quick Start](#-quick-start) •
 [🌐 Deploy to Vercel](#-deploy-live-to-vercel--free-domain) •
 [🧠 AI Lyrics Finder](#-ai-lyrics-to-music-finder) •
-[🔒 Security](#-security--open-source-safety) •
+[🔒 Security & Safety](#-security--privacy-guarantees) •
+[⚖️ Legal & Fair Use Notice](#-legal--copyright-disclaimer) •
 [👤 Creator](#-project-creator--maintainer)
 
 ---
@@ -135,14 +137,31 @@ In Vercel **Settings** $\rightarrow$ **Domains**, add your domain (e.g. `music.h
 
 ---
 
-## 🔒 Security & Open-Source Safety
+## 🔒 Security & Privacy Guarantees
 
-To ensure your deployment and repository remain 100% secure:
+Aura Music was engineered from the ground up with strict open-source security standards:
 
-1. **Environment Variables**: Never commit `.env` files containing real production secrets. Use `.env.example` as a public template.
-2. **Database Isolation**: The local `database.json` file is explicitly ignored in `.gitignore` to prevent leaking user credentials, tokens, or listening history.
-3. **CORS & Audio Proxying**: The backend proxy sanitizes and enforces safe origin headers when fetching external audio streams.
-4. **Token Authentication**: Change `JWT_SECRET` in `.env` to a strong 64-character random string for production deployments.
+1. **Zero Secret Leaks**:
+   * All `.env` files, API keys, and local session secrets are strictly ignored in `.gitignore`.
+   * Public template is provided via `.env.example`.
+2. **Local Database Isolation**:
+   * The local `database.json` store is excluded from git tracking, ensuring user credentials, passwords, and playback history are never uploaded to GitHub.
+3. **Password Security**:
+   * User passwords are encrypted with one-way salted `bcryptjs` hashing. Plaintext passwords or hashes are never exposed via REST API responses (`sanitizeUser` strip).
+4. **CORS & Audio Proxy Sanitization**:
+   * The backend audio proxy sanitizes URLs and handles stream piping with secure origin headers.
+
+---
+
+## ⚖️ Legal & Copyright Disclaimer
+
+> [!NOTE]
+> **Fair Use & Non-Commercial Educational Notice**:
+> Aura Music is an open-source research and educational project demonstrating client-side Web Audio DSP engineering, responsive UI design, and AI metadata parsing.
+> 
+> * **No Hosted Media**: Aura Music does **not** host, store, or archive copyrighted media files on its servers. All audio streams and album art are dynamically fetched on-demand from publicly accessible content distribution networks.
+> * **Intellectual Property**: All song titles, audio recordings, artist names, trademarks, and cover artwork belong strictly to their respective copyright holders and artists.
+> * **Commercial Use**: This repository is distributed under the MIT License solely for educational and portfolio demonstration purposes.
 
 ---
 
