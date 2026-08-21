@@ -88,7 +88,6 @@ npm run dev
 
 The application will launch concurrently:
 * 🌐 **Frontend**: `http://localhost:5173/`
-* ⚡ **Express Backend**: `http://localhost:3001/`
 
 ---
 
