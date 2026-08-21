@@ -74,6 +74,15 @@
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Hide default browser scrollbars globally */
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 body {
@@ -84,16 +93,14 @@ body {
   overflow-x: hidden;
 }
 
-/* Master Layout Frame */
+/* Master Full-Width Layout Frame (Uses Full PC Screen Width) */
 .app-container {
   display: flex;
   min-height: 100vh;
   background-color: var(--bg-app);
-  padding: 16px;
+  padding: 12px 16px;
   gap: 16px;
   position: relative;
-  max-width: 1720px;
-  margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
 }
@@ -108,8 +115,8 @@ body {
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-lg);
   position: relative;
-  min-height: calc(100vh - 32px);
-  padding-bottom: 110px;
+  min-height: calc(100vh - 24px);
+  padding-bottom: 115px;
   overflow-x: hidden;
 }
 
@@ -126,11 +133,10 @@ body {
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-md);
-  height: calc(100vh - 32px);
+  height: calc(100vh - 24px);
   position: sticky;
-  top: 16px;
+  top: 12px;
   overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 .sidebar-logo {
@@ -447,15 +453,13 @@ body {
   color: var(--text-main);
 }
 
-/* Main Content Body */
+/* Main Content Body (Full-Width Dynamic) */
 .content-body {
-  padding: 24px 32px;
+  padding: 24px 36px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  max-width: 1400px;
+  gap: 32px;
   width: 100%;
-  margin: 0 auto;
   box-sizing: border-box;
 }
 
@@ -947,11 +951,9 @@ body {
 .ai-view-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 130px);
-  max-width: 1000px;
+  height: calc(100vh - 120px);
   width: 100%;
-  margin: 0 auto;
-  padding: 0 16px 20px 16px;
+  padding: 0 32px 20px 32px;
   box-sizing: border-box;
 }
 
