@@ -14,15 +14,6 @@
 <p align="center">
   <strong>An ultra-fast, database-backed, audio-first streaming platform featuring real-time stream decryption, AI lyrics identification, Web Audio DSP 10-Band Graphic Equalizer, offline caching, and fluid glassmorphic design.</strong>
 </p>
-
-[🌟 Key Features](#-why-aura-music-is-better) •
-[🚀 Quick Start](#-quick-start) •
-[🌐 Deploy to Vercel](#-deploy-live-to-vercel--free-domain) •
-[🧠 AI Lyrics Finder](#-ai-lyrics-to-music-finder) •
-[🔒 Security & Safety](#-security--privacy-guarantees) •
-[⚖️ Legal & Fair Use Notice](#-legal--copyright-disclaimer) •
-[👤 Creator](#-project-creator--maintainer)
-
 ---
 
 </div>
