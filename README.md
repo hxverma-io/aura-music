@@ -101,58 +101,6 @@ The application will launch concurrently:
 
 ---
 
-## 🌐 Deploy Live to Vercel & Free Domain
-
-You can deploy this project for **100% free** with a custom domain or free `.vercel.app` subdomain!
-
-### Step 1: Push Code to Your GitHub
-```bash
-git init
-git add .
-git commit -m "feat: Aura Music v1.0 initial release"
-git branch -M main
-git remote add origin https://github.com/hxverma-io/aura-music.git
-git push -u origin main
-```
-
-### Step 2: Deploy Frontend on Vercel
-1. Go to [https://vercel.com](https://vercel.com) and log in with GitHub.
-2. Click **"Add New Project"** and select `aura-music`.
-3. Set Framework: `Vite`, Build: `npm run build`, Output Directory: `dist`.
-4. Click **Deploy**.
-
-### Step 3: Deploy Backend on Render / Railway (Free)
-1. Go to [https://render.com](https://render.com) and create a **New Web Service**.
-2. Connect the `aura-music` repo.
-3. Build command: `npm install`, Start command: `node server/index.js`.
-4. Render will generate an API URL (e.g. `https://aura-music-api.onrender.com`).
-5. In Vercel Project Settings $\rightarrow$ Environment Variables, set:
-   ```env
-   VITE_API_URL=https://aura-music-api.onrender.com/api
-   ```
-6. Redeploy on Vercel.
-
-### Step 4: Custom Domain
-In Vercel **Settings** $\rightarrow$ **Domains**, add your domain (e.g. `music.hxverma.io`). Add the `CNAME` record in your DNS provider and your custom domain is live with automatic SSL!
-
----
-
-## 🔒 Security & Privacy Guarantees
-
-Aura Music was engineered from the ground up with strict open-source security standards:
-
-1. **Zero Secret Leaks**:
-   * All `.env` files, API keys, and local session secrets are strictly ignored in `.gitignore`.
-   * Public template is provided via `.env.example`.
-2. **Local Database Isolation**:
-   * The local `database.json` store is excluded from git tracking, ensuring user credentials, passwords, and playback history are never uploaded to GitHub.
-3. **Password Security**:
-   * User passwords are encrypted with one-way salted `bcryptjs` hashing. Plaintext passwords or hashes are never exposed via REST API responses (`sanitizeUser` strip).
-4. **CORS & Audio Proxy Sanitization**:
-   * The backend audio proxy sanitizes URLs and handles stream piping with secure origin headers.
-
----
-
 ## ⚖️ Legal & Copyright Disclaimer
 
 > [!NOTE]
