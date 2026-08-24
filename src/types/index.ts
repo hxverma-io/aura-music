@@ -30,6 +30,59 @@ export type Mood =
   | 'Workout'
   | 'Party';
 
+export type LyricsSource = 'embedded' | 'user' | 'provider' | 'file';
+
+export type LyricsStatus =
+  | 'idle'
+  | 'loading'
+  | 'verified_synced'
+  | 'verified_plain'
+  | 'user_provided'
+  | 'instrumental'
+  | 'unavailable'
+  | 'error';
+
+export interface LyricsLine {
+  id: string;
+  startTime?: number;
+  endTime?: number;
+  text: string;
+}
+
+export interface LyricsResult {
+  trackId: string;
+  isrc?: string;
+  language?: string;
+  script?: string;
+  synced: boolean;
+  isInstrumental?: boolean;
+  verified: boolean;
+  source: LyricsSource;
+  status: LyricsStatus;
+  lines: LyricsLine[];
+  plainText?: string;
+  errorMessage?: string;
+}
+
+export interface SongDNA {
+  energy: number; // 0 - 100
+  bpm: number; // e.g. 120
+  danceability: number; // 0 - 100
+  acousticness: number; // 0 - 100
+  instrumentalness: number; // 0 - 100
+  vocalIntensity: number; // 0 - 100
+  mood: Mood;
+  genre: Genre;
+  era: string;
+  language: string;
+}
+
+export interface SmartPlaylistRule {
+  field: 'rating' | 'genre' | 'playCount' | 'energy' | 'bpm' | 'year';
+  operator: 'greater_than' | 'less_than' | 'equals' | 'contains';
+  value: any;
+}
+
 export interface Track {
   id: string;
   title: string;
@@ -43,11 +96,14 @@ export interface Track {
   genre: Genre;
   mood: Mood;
   year: number;
+  isInstrumental?: boolean;
   lyrics?: string[];
+  lyricsResult?: LyricsResult;
   playCount: number;
   likesCount: number;
   rating?: number;
   description?: string;
+  songDna?: SongDNA;
   synthPreset?: {
     type: 'synthwave' | 'ambient' | 'rock' | 'lofi' | 'energy';
     bpm: number;
@@ -102,6 +158,8 @@ export interface Playlist {
   isPinned?: boolean;
   isAiGenerated?: boolean;
   aiPrompt?: string;
+  isSmart?: boolean;
+  smartRules?: SmartPlaylistRule[];
   createdAt: string;
 }
 
@@ -176,6 +234,24 @@ export interface EqualizerBand {
   freq: number;
   gain: number;
   type: BiquadFilterType;
+  q?: number;
+}
+
+export interface RadioStation {
+  id: string;
+  name: string;
+  genre: string;
+  streamUrl: string;
+  coverArt: string;
+  listenersCount: number;
+  bitrate: string;
+  country: string;
+}
+
+export interface ABRepeat {
+  active: boolean;
+  start: number | null;
+  end: number | null;
 }
 
 export type ActiveTab = 
@@ -183,8 +259,13 @@ export type ActiveTab =
   | 'explore'
   | 'favorites'
   | 'playlists'
+  | 'library'
+  | 'lyrics'
   | 'ai-chat'
   | 'analytics'
   | 'social'
   | 'profile'
-  | 'settings';
+  | 'settings'
+  | 'tv-mode'
+  | 'remote';
+

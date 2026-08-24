@@ -1,42 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --font-primary: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-secondary: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-secondary: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* Refined Luxury Palette - Obsidian & Satin Crimson */
+  /* Audiophile Obsidian & Satin Crimson Palette */
   --color-primary: #ef233c;
   --color-primary-hover: #d90429;
-  --color-primary-glow: rgba(239, 35, 60, 0.22);
-  --color-accent: #ff3366;
-  
-  --bg-app: #08090d;
-  --bg-sidebar: #0e1017;
-  --bg-surface: #12141e;
-  --bg-card: #171a25;
-  --bg-card-hover: #1f2332;
-  --bg-elevated: #252b3d;
-  --border-color: rgba(255, 255, 255, 0.06);
-  --border-color-strong: rgba(255, 255, 255, 0.12);
+  --color-primary-glow: rgba(239, 35, 60, 0.15);
+  --color-accent: #e63946;
+
+  --bg-app: #07080c;
+  --bg-sidebar: #0b0d14;
+  --bg-surface: #0e1018;
+  --bg-card: #131620;
+  --bg-card-hover: #1a1e2b;
+  --bg-elevated: #202534;
+  --border-color: rgba(255, 255, 255, 0.05);
+  --border-color-strong: rgba(255, 255, 255, 0.09);
 
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --text-subtle: #64748b;
+  --text-subtle: #475569;
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.45);
-  --shadow-glow: 0 6px 20px var(--color-primary-glow);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.5);
 
-  --radius-xs: 8px;
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
   --radius-pill: 9999px;
 
-  --transition-fast: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-normal: 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme='light'] {

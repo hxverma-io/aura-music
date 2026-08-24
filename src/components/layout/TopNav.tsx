@@ -10,7 +10,9 @@ import {
   LogOut,
   LogIn,
   UserPlus,
-  X
+  X,
+  Mic,
+  Sparkles
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
@@ -100,22 +102,86 @@ export const TopNav: React.FC = () => {
     return false;
   };
 
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const { setToastMessage } = useData();
+
+  const handleVoiceSearch = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      setToastMessage('⚠️ Speech Recognition not supported in this browser.');
+      return;
+    }
+
+    try {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+
+      setIsListening(true);
+      setToastMessage('🎙️ Listening... Speak prompt e.g. "Play energetic Hindi songs"');
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setIsListening(false);
+        parseNaturalLanguageQuery(transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        setToastMessage('⚠️ Could not hear audio clearly.');
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (e) {
+      setIsListening(false);
+      setToastMessage('⚠️ Voice search error.');
+    }
+  };
+
+  const parseNaturalLanguageQuery = (queryText: string) => {
+    setSearchQuery(queryText);
+    const text = queryText.toLowerCase();
+
+    if (text.includes('hindi') || text.includes('bollywood')) {
+      setSelectedGenre('Bollywood' as any);
+      setToastMessage(`🤖 AI Search: Filtered for Hindi / Bollywood music`);
+    } else if (text.includes('punjabi')) {
+      setSelectedGenre('Punjabi' as any);
+      setToastMessage(`🤖 AI Search: Filtered for Punjabi music`);
+    } else if (text.includes('synthwave') || text.includes('cyberpunk')) {
+      setSelectedGenre('Synthwave');
+      setToastMessage(`🤖 AI Search: Filtered for Synthwave`);
+    } else if (text.includes('chill') || text.includes('relax')) {
+      setSelectedMood('Chill');
+      setToastMessage(`🤖 AI Search: Filtered for Chill mood`);
+    } else if (text.includes('energetic') || text.includes('workout')) {
+      setSelectedMood('Energy');
+      setToastMessage(`🤖 AI Search: Filtered for Energetic tracks`);
+    }
+
+    setSelectedArtist(null);
+    setSelectedPlaylist(null);
+    setActiveTab('explore');
+  };
+
   return (
     <header className="top-nav">
-      {/* Search Bar Pill */}
-      <div className="search-pill-container">
-        <Search size={18} color="var(--text-subtle)" />
+      {/* Search Bar Pill with AI Voice */}
+      <div className="search-pill-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <Sparkles size={16} color="var(--color-primary)" />
         <input
           type="text"
           className="search-input"
-          placeholder="Search Hindi, Punjabi, English songs, artists..."
+          placeholder='Ask AI e.g. "2000s energetic Hindi songs"...'
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
           onKeyDown={e => {
             if (e.key === 'Enter' && searchQuery.trim()) {
-              setSelectedArtist(null);
-              setSelectedPlaylist(null);
-              setActiveTab('explore');
+              parseNaturalLanguageQuery(searchQuery);
             }
           }}
         />
@@ -127,6 +193,24 @@ export const TopNav: React.FC = () => {
             <X size={16} />
           </button>
         )}
+        <button
+          onClick={handleVoiceSearch}
+          title="Natural Language Voice Search"
+          style={{
+            background: isListening ? 'rgba(239, 35, 60, 0.2)' : 'none',
+            border: 'none',
+            color: isListening ? '#ef233c' : 'var(--text-muted)',
+            cursor: 'pointer',
+            padding: '4px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            animation: isListening ? 'pulse 1s infinite' : 'none'
+          }}
+        >
+          <Mic size={18} />
+        </button>
       </div>
 
       {/* Category / Genre Pills */}

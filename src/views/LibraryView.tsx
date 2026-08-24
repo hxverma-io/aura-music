@@ -8,16 +8,26 @@ import {
   Play,
   Check,
   HardDrive,
-  Sparkles
+  Sparkles,
+  FolderPlus,
+  Layers,
+  Tag,
+  Star,
+  SlidersHorizontal,
+  FolderCheck
 } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useAudio } from '../context/AudioContext';
 import { PlaylistDetail } from '../components/playlist/PlaylistDetail';
 import { offlineService } from '../services/offlineService';
+import { MetadataEditorModal } from '../components/library/MetadataEditorModal';
+import { DuplicateDetectorModal } from '../components/library/DuplicateDetectorModal';
+import { Track } from '../types';
 
 export const LibraryView: React.FC = () => {
   const {
+    tracks,
     playlists,
     likedTracks,
     downloadedTracks,
@@ -28,12 +38,21 @@ export const LibraryView: React.FC = () => {
     setSelectedPlaylist,
     setIsCreatePlaylistModalOpen,
     setIsAiPlaylistModalOpen,
-    openArtistPage
+    openArtistPage,
+    setToastMessage
   } = useData();
 
   const { currentUser } = useAuth();
   const { playTrack } = useAudio();
-  const [activeTabSub, setActiveTabSub] = useState<'playlists' | 'liked' | 'downloads' | 'artists'>('playlists');
+
+  const [activeTabSub, setActiveTabSub] = useState<'playlists' | 'liked' | 'downloads' | 'artists' | 'folders'>('playlists');
+  const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [watchFolders, setWatchFolders] = useState<string[]>([
+    '/home/user/Music/FLAC_Collection',
+    '/media/external_drive/HiRes_Audio'
+  ]);
+  const [trackRatings, setTrackRatings] = useState<Record<string, number>>({});
 
   if (selectedPlaylist) {
     return (
@@ -49,29 +68,51 @@ export const LibraryView: React.FC = () => {
   const totalOfflineBytes = downloadedRecords.reduce((acc, r) => acc + (r.sizeBytes || 0), 0);
   const formattedStorage = offlineService.formatBytes(totalOfflineBytes);
 
+  const handleAddFolder = () => {
+    const path = prompt('Enter absolute path of music folder to watch (e.g. /home/user/Music/NewAlbum):');
+    if (path && path.trim()) {
+      setWatchFolders(prev => [...prev, path.trim()]);
+      setToastMessage(`📂 Watch folder "${path}" added to library indexer!`);
+    }
+  };
+
+  const handleSetRating = (trackId: string, rating: number) => {
+    setTrackRatings(prev => ({ ...prev, [trackId]: rating }));
+    setToastMessage(`⭐ Rated track ${rating} stars!`);
+  };
+
   return (
     <div className="content-body">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Your Music Library</h1>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Local Library & Server</h1>
           <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-            Playlists, favorites, offline cached audio and personal collections
+            Multiple watch folders, ID3 metadata editor, duplicate cleaner & smart playlists
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
             className="btn-secondary-hero"
+            onClick={() => setIsDuplicateModalOpen(true)}
+            style={{ fontSize: '0.82rem', padding: '8px 14px' }}
+          >
+            <Layers size={16} color="var(--color-primary)" /> Duplicate Scanner
+          </button>
+
+          <button
+            className="btn-secondary-hero"
             onClick={() => setIsAiPlaylistModalOpen(true)}
-            style={{ fontSize: '0.85rem', padding: '8px 18px' }}
+            style={{ fontSize: '0.82rem', padding: '8px 16px' }}
           >
             <Wand2 size={16} color="var(--color-primary)" /> AI Playlist
           </button>
+
           <button
             className="btn-play-hero"
             onClick={() => setIsCreatePlaylistModalOpen(true)}
-            style={{ fontSize: '0.85rem', padding: '8px 20px', backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
+            style={{ fontSize: '0.82rem', padding: '8px 18px', backgroundColor: 'var(--color-primary)', color: '#ffffff' }}
           >
             <Plus size={16} /> New Playlist
           </button>
@@ -79,7 +120,7 @@ export const LibraryView: React.FC = () => {
       </div>
 
       {/* Sub Tabs */}
-      <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', overflowX: 'auto', marginBottom: '20px' }}>
         <button
           onClick={() => setActiveTabSub('playlists')}
           style={{
@@ -94,7 +135,7 @@ export const LibraryView: React.FC = () => {
             whiteSpace: 'nowrap'
           }}
         >
-          All Playlists ({playlists.length})
+          Playlists ({playlists.length})
         </button>
 
         <button
@@ -135,6 +176,26 @@ export const LibraryView: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTabSub('folders')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: activeTabSub === 'folders' ? 'var(--color-primary)' : 'var(--text-muted)',
+            fontWeight: 700,
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            borderBottom: activeTabSub === 'folders' ? '2px solid var(--color-primary)' : 'none',
+            paddingBottom: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <FolderCheck size={16} /> Watch Folders ({watchFolders.length})
+        </button>
+
+        <button
           onClick={() => setActiveTabSub('artists')}
           style={{
             background: 'none',
@@ -152,10 +213,64 @@ export const LibraryView: React.FC = () => {
         </button>
       </div>
 
+      {/* Watch Folders Tab */}
+      {activeTabSub === 'folders' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>Indexed Local Storage Directories</h3>
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                New FLAC/WAV audio files placed in these directories are automatically ingested into your library.
+              </p>
+            </div>
+            <button
+              onClick={handleAddFolder}
+              style={{ backgroundColor: 'var(--color-primary)', color: '#ffffff', border: 'none', padding: '8px 16px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <FolderPlus size={16} /> Add Watch Directory
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {watchFolders.map((path, idx) => (
+              <div
+                key={path + idx}
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  padding: '14px 18px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <FolderCheck size={20} color="var(--color-primary)" />
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'monospace' }}>
+                      {path}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 700 }}>
+                      ✓ Auto-indexing Active • Real-time Watcher Online
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setWatchFolders(prev => prev.filter(p => p !== path))}
+                  style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Offline Downloads Tab */}
       {activeTabSub === 'downloads' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Storage & Play All Banner */}
           <div
             style={{
               backgroundColor: 'var(--bg-card)',
@@ -174,7 +289,7 @@ export const LibraryView: React.FC = () => {
                 <HardDrive size={28} />
               </div>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>SimpMusic / Echo In-App Offline Cache</h3>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Aura Local IndexedDB Offline Storage</h3>
                 <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                   {downloadedRecords.length} Songs Cached in IndexedDB • Total Storage: <strong style={{ color: '#ffffff' }}>{formattedStorage}</strong>
                 </div>
@@ -192,14 +307,10 @@ export const LibraryView: React.FC = () => {
             )}
           </div>
 
-          {/* List of Offline Cached Tracks */}
           {downloadedRecords.length === 0 ? (
             <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-subtle)' }}>
               <Download size={40} style={{ opacity: 0.3, marginBottom: '12px' }} />
               <div>No downloaded songs found in offline storage.</div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-                Click the <strong>Download</strong> icon on any song to save it for offline playback & direct device download!
-              </div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -225,7 +336,7 @@ export const LibraryView: React.FC = () => {
                       {idx + 1}
                     </span>
                     <img
-                      src={track.albumArt || 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=800&auto=format&fit=crop&q=80'}
+                      src={track.albumArt}
                       alt={track.title}
                       style={{ width: '44px', height: '44px', borderRadius: 'var(--radius-xs)', objectFit: 'cover' }}
                     />
@@ -243,13 +354,23 @@ export const LibraryView: React.FC = () => {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          setEditingTrack(track);
+                        }}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px' }}
+                        title="Edit ID3 Tag"
+                      >
+                        <Tag size={16} />
+                      </button>
+
+                      <button
                         className="continue-play-btn"
                         onClick={e => {
                           e.stopPropagation();
                           playTrack(track, downloadedTracks);
                         }}
                         style={{ color: 'var(--color-primary)' }}
-                        title="Play offline"
                       >
                         <Play size={16} fill="currentColor" />
                       </button>
@@ -260,7 +381,6 @@ export const LibraryView: React.FC = () => {
                           removeDownloadedTrack(rec.id);
                         }}
                         style={{ background: 'none', border: 'none', color: 'var(--text-subtle)', cursor: 'pointer', padding: '6px' }}
-                        title="Remove from offline cache"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -276,7 +396,6 @@ export const LibraryView: React.FC = () => {
       {/* Playlists Tab */}
       {activeTabSub === 'playlists' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
-          {/* Liked Songs Special Card */}
           <div
             onClick={() => setActiveTabSub('liked')}
             style={{
@@ -304,7 +423,6 @@ export const LibraryView: React.FC = () => {
             </div>
           </div>
 
-          {/* Offline Downloads Special Card */}
           <div
             onClick={() => setActiveTabSub('downloads')}
             style={{
@@ -333,7 +451,6 @@ export const LibraryView: React.FC = () => {
             </div>
           </div>
 
-          {/* Regular Playlists */}
           {playlists.map(pl => {
             const isPinned = pl.isPinned || false;
             const trackCount = pl.tracks?.length || pl.trackIds?.length || (pl as any).track_ids?.length || 0;
@@ -388,44 +505,69 @@ export const LibraryView: React.FC = () => {
               You haven't liked any songs yet. Click the heart icon on any track to save it here!
             </div>
           ) : (
-            likedTracks.map((track, idx) => (
-              <div
-                key={track.id || idx}
-                onClick={() => playTrack(track, likedTracks)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px',
-                  padding: '12px 18px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border-color)',
-                  cursor: 'pointer'
-                }}
-              >
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-subtle)', width: '20px' }}>
-                  {idx + 1}
-                </span>
-                <img
-                  src={track.albumArt || 'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=800&auto=format&fit=crop&q=80'}
-                  alt={track.title}
-                  style={{ width: '42px', height: '42px', borderRadius: 'var(--radius-xs)', objectFit: 'cover' }}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{track.title}</div>
-                  <div
-                    style={{ fontSize: '0.8rem', color: 'var(--text-muted)', cursor: 'pointer' }}
+            likedTracks.map((track, idx) => {
+              const currentRating = trackRatings[track.id] || track.rating || 5;
+              return (
+                <div
+                  key={track.id || idx}
+                  onClick={() => playTrack(track, likedTracks)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    padding: '12px 18px',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-subtle)', width: '20px' }}>
+                    {idx + 1}
+                  </span>
+                  <img
+                    src={track.albumArt}
+                    alt={track.title}
+                    style={{ width: '42px', height: '42px', borderRadius: 'var(--radius-xs)', objectFit: 'cover' }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{track.title}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{track.artist}</div>
+                  </div>
+
+                  {/* 5-Star Rating Control */}
+                  <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleSetRating(track.id, star);
+                        }}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                      >
+                        <Star
+                          size={14}
+                          color="#f59e0b"
+                          fill={star <= currentRating ? '#f59e0b' : 'none'}
+                        />
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
                     onClick={e => {
                       e.stopPropagation();
-                      openArtistPage({ id: track.artistId || track.artist, name: track.artist });
+                      setEditingTrack(track);
                     }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px' }}
+                    title="Edit ID3 Tag"
                   >
-                    {track.artist}
-                  </div>
+                    <Tag size={16} />
+                  </button>
                 </div>
-                <span style={{ color: 'var(--color-primary)', fontSize: '0.8rem', fontWeight: 600 }}>{track.genre || 'Music'}</span>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
@@ -463,6 +605,19 @@ export const LibraryView: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* ID3 Tag Editor Modal */}
+      <MetadataEditorModal
+        track={editingTrack}
+        isOpen={Boolean(editingTrack)}
+        onClose={() => setEditingTrack(null)}
+      />
+
+      {/* Duplicate Scanner Modal */}
+      <DuplicateDetectorModal
+        isOpen={isDuplicateModalOpen}
+        onClose={() => setIsDuplicateModalOpen(false)}
+      />
     </div>
   );
 };

@@ -43,8 +43,19 @@ export const PlaylistDetail: React.FC<PlaylistDetailProps> = ({ playlist, onBack
   const { currentUser } = useAuth();
   const { currentTrack, isPlaying, playTrack, togglePlay } = useAudio();
 
-  // Combine direct playlist tracks with global tracks by ID so songs NEVER disappear
-  const playlistTracks: Track[] = (playlist.tracks && playlist.tracks.length > 0)
+  // Compute playlist tracks dynamically if Smart Playlist (with rule engine), else by ID
+  const playlistTracks: Track[] = (playlist.isSmart && playlist.smartRules && playlist.smartRules.length > 0)
+    ? tracks.filter(t => {
+        return playlist.smartRules!.every(rule => {
+          const val = String(rule.value).toLowerCase();
+          if (rule.field === 'rating') return (t.rating || 5) >= Number(rule.value);
+          if (rule.field === 'genre') return t.genre?.toLowerCase() === val;
+          if (rule.field === 'energy') return (t.songDna?.energy || 75) >= Number(rule.value);
+          if (rule.field === 'bpm') return (t.songDna?.bpm || 120) >= Number(rule.value);
+          return true;
+        });
+      })
+    : (playlist.tracks && playlist.tracks.length > 0)
     ? playlist.tracks
     : tracks.filter(t => (playlist.trackIds || (playlist as any).track_ids || []).includes(t.id));
 

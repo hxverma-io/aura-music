@@ -10,7 +10,10 @@ import {
   User,
   Settings,
   Play,
-  Pause
+  Pause,
+  FolderTree,
+  Tv,
+  Mic
 } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAudio } from '../../context/AudioContext';
@@ -23,9 +26,12 @@ export const Sidebar: React.FC = () => {
   const navItems: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
     { id: 'home', label: 'Home', icon: <Home size={19} /> },
     { id: 'explore', label: 'Explore', icon: <Compass size={19} /> },
+    { id: 'library', label: 'Local Library', icon: <FolderTree size={19} /> },
+    { id: 'lyrics', label: 'Karaoke Lyrics', icon: <Mic size={19} /> },
     { id: 'favorites', label: 'Favorites', icon: <Heart size={19} /> },
     { id: 'playlists', label: 'Playlists', icon: <ListMusic size={19} /> },
     { id: 'ai-chat', label: 'AI Assistant', icon: <Bot size={19} /> },
+    { id: 'tv-mode', label: '10-Ft TV Mode', icon: <Tv size={19} /> },
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={19} /> },
     { id: 'social', label: 'Social Feed', icon: <Users size={19} /> },
     { id: 'profile', label: 'Profile', icon: <User size={19} /> },

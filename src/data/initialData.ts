@@ -191,7 +191,17 @@ export const INITIAL_TRACKS: Track[] = [
     playCount: 310000000,
     likesCount: 18000000,
     rating: 9.9,
-    description: 'Legendary synthwave pop anthem by The Weeknd in full length 320kbps.'
+    description: 'Legendary synthwave pop anthem by The Weeknd in full length 320kbps.',
+    lyrics: [
+      "[00:10] I'm tryna put you in the worst mood, ah",
+      "[00:24] P1 cleaner than your church shoes, ah",
+      "[00:38] Point made, n****, double 0 7",
+      "[00:52] Switch up my style, I take any lane",
+      "[01:10] Look what you've done, I'm a motherf***in' starboy",
+      "[01:30] Every day a n**** try to test me, ah",
+      "[01:50] Every day a n**** try to end me, ah",
+      "[02:10] Look what you've done, I'm a motherf***in' starboy"
+    ]
   },
   {
     id: 'track-aujla-tauba',
@@ -208,7 +218,15 @@ export const INITIAL_TRACKS: Track[] = [
     playCount: 195000000,
     likesCount: 9200000,
     rating: 9.9,
-    description: 'Viral global Punjabi groove by Karan Aujla.'
+    description: 'Viral global Punjabi groove by Karan Aujla.',
+    lyrics: [
+      "[00:12] Husan tera tauba tauba",
+      "[00:28] Karde se saare tauba tauba",
+      "[00:45] Dil sada luteya ve tu hass ke",
+      "[01:02] Tere utte dull gaye ni gabbroo ni khas ke",
+      "[01:25] Akh teri bazi laave jatta waali reet te",
+      "[01:48] Nachdi tu sohniye ni sadke sangeet te"
+    ]
   },
   {
     id: 'track-coldplay-yellow',
@@ -225,7 +243,16 @@ export const INITIAL_TRACKS: Track[] = [
     playCount: 410000000,
     likesCount: 17800000,
     rating: 9.9,
-    description: 'Timeless melodic stadium acoustic rock by Coldplay.'
+    description: 'Timeless melodic stadium acoustic rock by Coldplay.',
+    lyrics: [
+      "[00:15] Look at the stars, look how they shine for you",
+      "[00:34] And everything you do, yeah they were all yellow",
+      "[00:58] I came along, I wrote a song for you",
+      "[01:20] And all the things you do, and it was called Yellow",
+      "[01:45] Your skin, oh yeah your skin and bones",
+      "[02:08] Turn into something beautiful",
+      "[02:30] For you I'd bleed myself dry"
+    ]
   },
   {
     id: 'track-anuv-baarishein',
@@ -242,7 +269,15 @@ export const INITIAL_TRACKS: Track[] = [
     playCount: 180000000,
     likesCount: 8400000,
     rating: 9.9,
-    description: 'Emotional acoustic guitar ballad by Anuv Jain.'
+    description: 'Emotional acoustic guitar ballad by Anuv Jain.',
+    lyrics: [
+      "[00:12] Hawaaon mein baarishein hain",
+      "[00:30] Tu paas hai toh saari khwahishein hain",
+      "[00:52] Kabhi mere saath tum baith ke dekho",
+      "[01:15] Tumhein samjhayein yeh kya aazmaishein hain",
+      "[01:40] Yeh jo boond boond girti hai zameen pe",
+      "[02:02] Tere pyaar ki hi saari pukaarein hain"
+    ]
   },
   {
     id: 'track-zimmer-time',
@@ -259,7 +294,8 @@ export const INITIAL_TRACKS: Track[] = [
     playCount: 220000000,
     likesCount: 11500000,
     rating: 10.0,
-    description: 'Majestic orchestral masterpiece by Hans Zimmer.'
+    description: 'Majestic orchestral masterpiece by Hans Zimmer.',
+    isInstrumental: true
   }
 ];
 

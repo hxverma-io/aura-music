@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Trash2, Play, Music, ListPlus } from 'lucide-react';
+import { X, Trash2, Play, Music, ListPlus, ChevronUp, ChevronDown } from 'lucide-react';
 import { useAudio } from '../../context/AudioContext';
 
 export const QueueDrawer: React.FC = () => {
@@ -11,6 +11,7 @@ export const QueueDrawer: React.FC = () => {
     currentTrack,
     playTrack,
     removeFromQueue,
+    moveQueueItem,
     clearQueue
   } = useAudio();
 
@@ -108,19 +109,39 @@ export const QueueDrawer: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => removeFromQueue(idx)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-subtle)',
-                      cursor: 'pointer',
-                      padding: '4px'
-                    }}
-                    title="Remove from queue"
-                  >
-                    <X size={16} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '2px' }}>
+                    {idx > 0 && (
+                      <button
+                        onClick={() => moveQueueItem(idx, idx - 1)}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-subtle)', cursor: 'pointer', padding: '2px' }}
+                        title="Move Up"
+                      >
+                        <ChevronUp size={15} />
+                      </button>
+                    )}
+                    {idx < queue.length - 1 && (
+                      <button
+                        onClick={() => moveQueueItem(idx, idx + 1)}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-subtle)', cursor: 'pointer', padding: '2px' }}
+                        title="Move Down"
+                      >
+                        <ChevronDown size={15} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeFromQueue(idx)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-subtle)',
+                        cursor: 'pointer',
+                        padding: '2px'
+                      }}
+                      title="Remove from queue"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
                 </div>
               );
             })
