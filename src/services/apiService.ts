@@ -143,28 +143,27 @@ class ApiService {
     });
   }
 
-  private mapSaavnToTracks(results: any[]) {
+  private mapItunesToTracks(results: any[]) {
     return results.map((item: any) => {
-      // Handle saavn.dev API response format
-      const highResImage = Array.isArray(item.image) ? (item.image.find((i: any) => i.quality === '500x500') || item.image[item.image.length - 1])?.url : item.image;
-      const highResAudio = Array.isArray(item.downloadUrl) ? (item.downloadUrl.find((d: any) => d.quality === '320kbps') || item.downloadUrl[item.downloadUrl.length - 1])?.url : item.downloadUrl;
+      // Get higher resolution artwork (change 100x100 to 500x500)
+      const highResImage = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '500x500bb') : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80';
       
       return {
-        id: 'track-' + item.id,
-        title: item.name || 'Unknown',
-        artist: item.primaryArtists || 'Unknown Artist',
-        artistId: 'art-' + item.id,
-        album: item.album?.name || 'Single',
-        albumArt: highResImage || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80',
-        audioUrl: highResAudio || '',
-        duration: parseInt(item.duration) || 180,
-        genre: 'Pop',
+        id: 'track-' + item.trackId,
+        title: item.trackName || 'Unknown',
+        artist: item.artistName || 'Unknown Artist',
+        artistId: 'art-' + item.artistId,
+        album: item.collectionName || 'Single',
+        albumArt: highResImage,
+        audioUrl: item.previewUrl || '', // 30-second preview from iTunes
+        duration: Math.floor((item.trackTimeMillis || 0) / 1000) || 180,
+        genre: item.primaryGenreName || 'Pop',
         mood: 'Energy',
-        year: parseInt(item.year) || 2024,
+        year: item.releaseDate ? parseInt(item.releaseDate.substring(0, 4)) : 2024,
         playCount: Math.floor(Math.random() * 5000000) + 1500000,
         likesCount: Math.floor(Math.random() * 400000) + 75000,
         rating: 9.9,
-        description: `${item.name} by ${item.primaryArtists}.`
+        description: `${item.trackName} by ${item.artistName}.`
       };
     }).filter((t: any) => t.audioUrl);
   }
@@ -172,10 +171,11 @@ class ApiService {
   // Real YouTube/Saavn Music Discovery
   public async getTrendingMusic() {
     try {
-      const res = await fetch('https://saavn.dev/api/search/songs?query=trending+hindi+english');
+      // Fetch trending/popular from iTunes API
+      const res = await fetch('https://itunes.apple.com/search?term=bollywood+punjabi+hits&limit=20&entity=song');
       const data = await res.json();
-      if (data && data.success && data.data && data.data.results) {
-         return { tracks: this.mapSaavnToTracks(data.data.results) };
+      if (data && data.results) {
+         return { tracks: this.mapItunesToTracks(data.results) };
       }
     } catch (e) {
       console.warn("Public API trending fetch failed", e);
@@ -185,10 +185,10 @@ class ApiService {
 
   public async searchMusic(query: string) {
     try {
-      const res = await fetch(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}`);
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&limit=25&entity=song`);
       const data = await res.json();
-      if (data && data.success && data.data && data.data.results) {
-         return { tracks: this.mapSaavnToTracks(data.data.results) };
+      if (data && data.results) {
+         return { tracks: this.mapItunesToTracks(data.results) };
       }
     } catch (e) {
       console.warn("Public API search fetch failed", e);
