@@ -13,7 +13,9 @@ import {
 import {
   INITIAL_ARTISTS,
   INITIAL_ALBUMS,
-  INITIAL_NOTIFICATIONS
+  INITIAL_NOTIFICATIONS,
+  INITIAL_TRACKS,
+  INITIAL_PLAYLISTS
 } from '../data/initialData';
 import { api } from '../services/apiService';
 import { offlineService, OfflineRecord } from '../services/offlineService';
@@ -147,17 +149,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const trendingRes = await api.getTrendingMusic();
-        if (trendingRes.tracks && trendingRes.tracks.length > 0) {
-          setTracks(trendingRes.tracks);
-        }
+        // Fallback to static data directly for Cloudflare Pages (no backend needed)
+        setTracks(INITIAL_TRACKS);
 
-        const creatorRes = await api.getCreatorProfile();
+        const creatorRes = await api.getCreatorProfile().catch(() => ({}));
         if (creatorRes.creator) {
           setCreatorProfile(creatorRes.creator);
-          if (creatorRes.playlists && playlists.length === 0) {
-            setPlaylists(creatorRes.playlists);
-          }
+        }
+        if (playlists.length === 0) {
+          setPlaylists(creatorRes.playlists || INITIAL_PLAYLISTS);
         }
       } catch (err) {
         console.warn('Could not fetch backend trending data:', err);
@@ -170,13 +170,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshLibrary = async () => {
     if (!isAuthenticated) return;
     try {
-      const lib = await api.getLibrary();
+      const lib = await api.getLibrary().catch(() => null);
       if (lib) {
         setLikedTracks(lib.likes || []);
         setLikedTrackIds(lib.likedTrackIds || []);
         if (lib.playlists && lib.playlists.length > 0) {
           setPlaylists(lib.playlists);
         }
+      } else {
+         // Fallback to static playlists if backend is unavailable
+         if (playlists.length === 0) {
+           setPlaylists(INITIAL_PLAYLISTS);
+         }
       }
     } catch (err) {
       console.warn('Error refreshing library from database:', err);
@@ -189,15 +194,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Live Real Music Search Debounced
   useEffect(() => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      if (tracks.length !== INITIAL_TRACKS.length) {
+         setTracks(INITIAL_TRACKS);
+      }
+      return;
+    }
 
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await api.searchMusic(searchQuery);
-        if (res.tracks && res.tracks.length > 0) {
-          setTracks(res.tracks);
-        }
+        // Fallback to static search if backend is unavailable
+        const q = searchQuery.toLowerCase();
+        const results = INITIAL_TRACKS.filter(t => 
+          t.title.toLowerCase().includes(q) || 
+          t.artist.toLowerCase().includes(q)
+        );
+        setTracks(results);
       } catch (err) {
         console.error('Search error:', err);
       } finally {
