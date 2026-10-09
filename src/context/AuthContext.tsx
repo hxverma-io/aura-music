@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
-import { api } from '../services/apiService';
+import { supabase } from '../services/supabaseClient';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -57,38 +57,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = api.getToken();
-        if (token) {
-          const res = await api.getMe();
-          if (res.user) {
-            setCurrentUser(mapUserFromDb(res.user));
-            setIsAuthenticated(true);
-          } else {
-            setCurrentUser(DEFAULT_GUEST_USER);
-            setIsAuthenticated(true);
-            api.setToken(null);
-          }
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && session.user) {
+          await fetchUserProfile(session.user);
         } else {
-          setCurrentUser(DEFAULT_GUEST_USER);
-          setIsAuthenticated(true);
+          setCurrentUser(null);
+          setIsAuthenticated(false);
         }
       } catch (err) {
         console.warn('Session check fallback to default profile:', err);
-        setCurrentUser(DEFAULT_GUEST_USER);
-        setIsAuthenticated(true);
+        setCurrentUser(null);
+        setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }
+
+      // Listen for auth state changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (session && session.user) {
+          await fetchUserProfile(session.user);
+        } else {
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+        }
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
     };
     checkAuth();
   }, []);
 
+  const fetchUserProfile = async (supabaseUser: any) => {
+    try {
+      // Assuming you have a 'users' table in Supabase where id matches auth.users.id
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
+      
+      if (data) {
+        setCurrentUser(mapUserFromDb(data));
+      } else {
+        // Fallback if user record isn't in 'users' table yet
+        setCurrentUser({
+          ...DEFAULT_GUEST_USER,
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          name: supabaseUser.user_metadata?.full_name || 'User',
+          username: supabaseUser.user_metadata?.username || supabaseUser.email?.split('@')[0] || 'user',
+        });
+      }
+      setIsAuthenticated(true);
+    } catch (err) {
+      console.error('Error fetching user profile', err);
+    }
+  };
+
   const mapUserFromDb = (dbUser: any): User => ({
     id: dbUser.id,
-    name: dbUser.name,
-    username: dbUser.username,
-    email: dbUser.email,
-    avatar: dbUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dbUser.name)}&background=ef233c&color=ffffff&bold=true`,
+    name: dbUser.name || 'User',
+    username: dbUser.username || 'user',
+    email: dbUser.email || '',
+    avatar: dbUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dbUser.name || 'User')}&background=ef233c&color=ffffff&bold=true`,
     bio: dbUser.bio || '',
     favoriteGenres: dbUser.favorite_genres || ['Bollywood', 'Punjabi', 'Pop'],
     likedTrackIds: [],
@@ -99,15 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     pinnedPlaylistIds: [],
     recentlyPlayed: [],
     searchHistory: [],
-    settings: dbUser.settings || {
-      audioQuality: 'lossless',
-      normalizeVolume: true,
-      crossfadeSeconds: 3,
-      theme: 'dark',
-      socialSharingEnabled: true,
-      notificationsEnabled: true,
-      soundEffects: true
-    }
+    settings: dbUser.settings || DEFAULT_GUEST_USER.settings
   });
 
   const openAuthModal = (mode: 'signin' | 'signup' | 'forgot' | 'profile' = 'signin') => {
@@ -121,10 +146,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (emailOrUsername: string, password?: string): Promise<boolean> => {
     try {
-      const res = await api.signin({ login: emailOrUsername, password: password || '' });
-      if (res.user) {
-        setCurrentUser(mapUserFromDb(res.user));
-        setIsAuthenticated(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailOrUsername,
+        password: password || '',
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        await fetchUserProfile(data.user);
         closeAuthModal();
         return true;
       }
@@ -137,10 +167,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (name: string, username: string, email: string, password?: string): Promise<boolean> => {
     try {
-      const res = await api.signup({ name, username, email, password: password || '' });
-      if (res.user) {
-        setCurrentUser(mapUserFromDb(res.user));
-        setIsAuthenticated(true);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password: password || '',
+        options: {
+          data: {
+            full_name: name,
+            username: username
+          }
+        }
+      });
+      
+      if (error) throw error;
+
+      if (data.user) {
+        // Automatically insert into users table
+        await supabase.from('users').insert([{
+          id: data.user.id,
+          name: name,
+          username: username,
+          email: email
+        }]);
+
+        await fetchUserProfile(data.user);
         closeAuthModal();
         return true;
       }
@@ -151,41 +200,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
-  const googleLogin = async (payload: { email: string; name: string; avatar?: string; googleId?: string }): Promise<boolean> => {
+  const googleLogin = async (): Promise<boolean> => {
     try {
-      const res = await api.googleLogin(payload);
-      if (res.user) {
-        setCurrentUser(mapUserFromDb(res.user));
-        setIsAuthenticated(true);
-        closeAuthModal();
-        return true;
-      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+      });
+      if (error) throw error;
+      return true; // Page will redirect
     } catch (err) {
       console.error('Google login error:', err);
       throw err;
     }
-    return false;
   };
 
-  const logout = () => {
-    api.logout();
+  const logout = async () => {
+    await supabase.auth.signOut();
     setIsAuthenticated(false);
     setCurrentUser(null);
   };
 
   const updateProfile = async (updatedData: Partial<User>) => {
+    if (!currentUser) return;
     try {
-      const res = await api.updateProfile({
+      const updates = {
         name: updatedData.name,
         username: updatedData.username,
         bio: updatedData.bio,
         avatar: updatedData.avatar,
         favorite_genres: updatedData.favoriteGenres,
-        settings: updatedData.settings
-      });
-      if (res.user) {
-        setCurrentUser(mapUserFromDb(res.user));
-      }
+        settings: updatedData.settings,
+        updated_at: new Date()
+      };
+      
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', currentUser.id);
+        
+      if (error) throw error;
+      
+      setCurrentUser(prev => prev ? { ...prev, ...updatedData } : null);
     } catch (err) {
       console.error('Failed to update profile on backend:', err);
     }

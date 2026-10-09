@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
     "@types/canvas-confetti": "^1.9.0",
     "@types/crypto-js": "^4.2.2",
     "bcryptjs": "^3.0.3",
