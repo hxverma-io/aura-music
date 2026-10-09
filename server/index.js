@@ -30,6 +30,10 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🎵 Aura Music Backend running at http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🎵 Aura Music Backend running at http://localhost:${PORT}`);
+  });
+}
+
+export default app;
